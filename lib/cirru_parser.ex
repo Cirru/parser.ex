@@ -8,12 +8,12 @@ defmodule CirruParser do
     state = %{
       :name => :indent,
       :x => 1,
-      :y => 2,
+      :y => 1,
       :level => 1,
       :indent => 0,
       :indented => 0,
       :nest => 0,
-      :path => filename,
+      :path => filename
     }
 
     res = parseRunner [], buffer, state, code
@@ -66,9 +66,9 @@ defmodule CirruParser do
   end
 
   defp escape_n(xs, buffer, state, code) do
-    state = %{state | :x => 1, :name => :string}
+    state = %{state | :x => state.x + 1, :name => :string}
     buffer = %{buffer | :name => buffer.x <> "\n"}
-    parseRunner xs, buffer, state, code
+    parseRunner xs, buffer, state, (String.slice code, 1..-1)
   end
 
   defp escape_t(xs, buffer, state, code) do
@@ -86,7 +86,7 @@ defmodule CirruParser do
   # string
 
   defp string_backslash(xs, buffer, state, code) do
-    state = %{state | :name => :token_eof, :x => state.x + 1}
+    state = %{state | :name => :escape, :x => state.x + 1}
     parseRunner xs, buffer, state, (String.slice code, 1..-1)
   end
 
@@ -108,7 +108,7 @@ defmodule CirruParser do
   # space
 
   defp space_space(xs, buffer, state, code) do
-    state = %{state | :state => state.x + 1}
+    state = %{state | :x => state.x + 1}
     parseRunner xs, buffer, state, (String.slice code, 1..-1)
   end
 
@@ -146,7 +146,7 @@ defmodule CirruParser do
     buffer = %{:text => "",
       :x => state.x, :y => state.y,
       :ex => state.x, :ey => state.y,
-      :path => state.parseRunner
+      :path => state.path
     }
     state = %{state | :name => :string, :x => state.x + 1}
 
@@ -240,7 +240,7 @@ defmodule CirruParser do
     end
 
     state = %{state | :name => :space,
-      :level => state.level + diff, :indent => state.indented
+      :level => state.level + diff, :indent => indented
     }
     parseRunner xs, buffer, state, code
   end
@@ -248,7 +248,13 @@ defmodule CirruParser do
   # parse
 
   defp parseRunner(xs, buffer, state, code) do
-    if String.length(code) == 0 do
+
+    # IO.inspect state
+    # IO.inspect code
+    # IO.inspect xs
+    # IO.puts "\n\n"
+
+    if code == "" do
       eof = true
     else
       eof = false

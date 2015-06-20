@@ -16,7 +16,7 @@ defmodule CirruParser.Tree do
   end
 
   defp nestingHelper(xs, n) do
-    nestingHelper xs, (n - 1)
+    [(nestingHelper xs, (n - 1))]
   end
 
   def createNesting(n) do
@@ -37,7 +37,7 @@ defmodule CirruParser.Tree do
         chunk = resolveDollar (tl listAfter)
         before ++ [chunk]
       true ->
-        chunk = before ++ [listAfter]
+        chunk = before ++ [cursor]
         dollarHelper chunk, (tl listAfter)
     end
   end

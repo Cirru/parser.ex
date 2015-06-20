@@ -15,13 +15,17 @@ defmodule CirruParserTest do
     generated
   end
 
-  test "on single task" do
-    name = "line"
-    template = readFileFor name
-    generated = generateFor name
-    IO.puts generated
-    IO.puts template
-    assert generated == template
+  test "all demos" do
+    allCases = [
+      "comma", "demo", "folding", "html",
+      "indent", "line", "parentheses",
+      "quote", "spaces", "unfolding"
+    ]
+    Enum.map allCases, fn (name) ->
+      template = String.strip (readFileFor name)
+      generated = String.strip (generateFor name)
+      assert generated == template
+    end
   end
 
 end
