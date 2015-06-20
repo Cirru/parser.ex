@@ -5,7 +5,7 @@ defmodule CirruParser do
 
   def parse(code, filename) do
     buffer = nil
-    buffer = %{
+    state = %{
       :name => :indent,
       :x => 1,
       :y => 2,
@@ -17,13 +17,13 @@ defmodule CirruParser do
     }
 
     res = parseRunner [], buffer, state, code
-    res = Enum.map Tree.resolveDollar, res
-    res = Enum.map Tree.resolveComma, res
+    res = Enum.map res, Tree.resolveDollar
+    res = Enum.map res, Tree.resolveComma
     res
   end
 
   defp shorten(xs) when is_list xs do
-    Enum.map shorten, xs
+    Enum.map xs, fn (item) -> shorten item end
   end
 
   defp shorten(xs) do
@@ -37,28 +37,31 @@ defmodule CirruParser do
 
   # eof
 
-  defp escape_eof(xs, buffer, state, code) do
+  defp escape_eof(_, _, _, _) do
     raise "EOF in escape state"
   end
 
-  defp string_end(xs, buffer, state, code) do
+  defp string_eof(_, _, _, _) do
     raise "EOF in string state"
   end
 
-  defp token_eof(xs, buffer, state, code) do
-    buffer = %{buffer | :ex => state.x, :ey => state.y}
-    xs = Tree.appendItem xs, state.level, buffer
-    buffer = nil
+  def space_eof(xs, _, _, _) do
     xs
   end
 
-  defp indent_eof(xs, buffer, state, code) do
+  defp token_eof(xs, buffer, state, _) do
+    buffer = %{buffer | :ex => state.x, :ey => state.y}
+    xs = Tree.appendItem xs, state.level, buffer
+    xs
+  end
+
+  defp indent_eof(xs, _, _, _) do
     xs
   end
 
   # escape
 
-  defp escape_newline(xs, buffer, state, code) do
+  defp escape_newline(_, _, _, _) do
     raise "new line while space"
   end
 
@@ -82,12 +85,12 @@ defmodule CirruParser do
 
   # string
 
-  defp string_backslasg(xs, buffer, state, code) do
+  defp string_backslash(xs, buffer, state, code) do
     state = %{state | :name => :token_eof, :x => state.x + 1}
     parseRunner xs, buffer, state, (String.slice code, 1..-1)
   end
 
-  defp string_newline(xs, buffer, state, code) do
+  defp string_newline(_, _, _, _) do
     raise "newline in a string"
   end
 
@@ -139,7 +142,7 @@ defmodule CirruParser do
     parseRunner xs, buffer, state, (String.slice code, 1..-1)
   end
 
-  defp space_quote(xs, buffer, state, code) do
+  defp space_quote(xs, _, state, code) do
     buffer = %{:text => "", :x => state.x, :y => state.y,
       :path => state.parseRunner
     }
@@ -148,7 +151,7 @@ defmodule CirruParser do
     parseRunner xs, buffer, state, (String.slice code, 1..-1)
   end
 
-  defp space_else(xs, buffer, state, code) do
+  defp space_else(xs, _, state, code) do
     buffer = %{:text => (String.first code),
       :x => state.x, :y => state.y,
       :path => state.path
@@ -177,7 +180,7 @@ defmodule CirruParser do
     parseRunner xs, buffer, state, (String.slice code, 1..-1)
   end
 
-  defp token_open(xs, buffer, state, code) do
+  defp token_open(_, _, _, _) do
     raise "open parenthesis in token"
   end
 
@@ -212,7 +215,7 @@ defmodule CirruParser do
     parseRunner xs, buffer, state, (String.slice code, 1..-1)
   end
 
-  defp indent_close(xs, buffer, state, code) do
+  defp indent_close(_, _, _, _) do
     raise "close parenthesis at indent"
   end
 
