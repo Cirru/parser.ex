@@ -3,6 +3,7 @@ defmodule CirruParser.Mixfile do
 
   def project do
     [app: :cirru_parser,
+     description: "Cirru Parser in Elixir",
      version: "0.0.1",
      elixir: "~> 1.0",
      package: package,
@@ -27,14 +28,15 @@ defmodule CirruParser.Mixfile do
   # Type `mix help deps` for more examples and options
   defp deps do
     [
-      {:exjsx, "~> 3.1.0"}
+      {:exjsx, "~> 3.1.0", only: [:dev, :test]}
     ]
   end
 
   defp package do
     [
       files: ["lib", "README.md", "mix.exs"],
-      licensecs: ["MIT"],
+      contributors: ["jiyinyiyong"],
+      licenses: ["MIT"],
       links: %{"GitHub" => "https://github.com/Cirru/parser.ex"}
     ]
   end
