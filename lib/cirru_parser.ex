@@ -17,8 +17,8 @@ defmodule CirruParser do
     }
 
     res = parseRunner [], buffer, state, code
-    res = Enum.map res, Tree.resolveDollar
-    res = Enum.map res, Tree.resolveComma
+    res = Enum.map res, fn (item) -> Tree.resolveDollar item end
+    res = Enum.map res, fn (item) -> Tree.resolveComma item end
     res
   end
 
@@ -143,7 +143,9 @@ defmodule CirruParser do
   end
 
   defp space_quote(xs, _, state, code) do
-    buffer = %{:text => "", :x => state.x, :y => state.y,
+    buffer = %{:text => "",
+      :x => state.x, :y => state.y,
+      :ex => state.x, :ey => state.y,
       :path => state.parseRunner
     }
     state = %{state | :name => :string, :x => state.x + 1}
@@ -154,6 +156,7 @@ defmodule CirruParser do
   defp space_else(xs, _, state, code) do
     buffer = %{:text => (String.first code),
       :x => state.x, :y => state.y,
+      :ex => state.x, :ey => state.y,
       :path => state.path
     }
     state = %{state | :name => :token, :x => state.x + 1}
@@ -163,7 +166,7 @@ defmodule CirruParser do
   # token
 
   defp token_space(xs, buffer, state, code) do
-    buffer = %{buffer | :sx => state.x, :ey => state.y}
+    buffer = %{buffer | :ex => state.x, :ey => state.y}
     xs = Tree.appendItem xs, state.level, buffer
     state = %{state | :name => :space, :x => state.x + 1}
     buffer = nil
@@ -171,7 +174,7 @@ defmodule CirruParser do
   end
 
   defp token_newline(xs, buffer, state, code) do
-    buffer = %{buffer | :xs => state.x, :ey => state.y}
+    buffer = %{buffer | :ex => state.x, :ey => state.y}
     xs = Tree.appendItem xs, state.level, buffer
     state = %{state | :name => :indent,
       :indented => 0, :x => 1, :y => state.y + 1
@@ -198,7 +201,7 @@ defmodule CirruParser do
   end
 
   defp token_else(xs, buffer, state, code) do
-    buffer = %{buffer | :text => state.buffer <> (String.first code)}
+    buffer = %{buffer | :text => buffer.text <> (String.first code)}
     state = %{state | :x => state.x + 1}
     parseRunner xs, buffer, state, (String.slice code, 1..-1)
   end
@@ -237,7 +240,7 @@ defmodule CirruParser do
     end
 
     state = %{state | :name => :space,
-      :level => state.level + diff, :indent => :indented
+      :level => state.level + diff, :indent => state.indented
     }
     parseRunner xs, buffer, state, code
   end
@@ -245,11 +248,11 @@ defmodule CirruParser do
   # parse
 
   defp parseRunner(xs, buffer, state, code) do
-    if length(code) == 0 do
+    if String.length(code) == 0 do
       eof = true
     else
       eof = false
-      char = code[1]
+      char = String.first code
     end
 
     case state.name do

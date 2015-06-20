@@ -2,16 +2,26 @@ defmodule CirruParserTest do
   use ExUnit.Case
   require JSX
 
-  Enum.map ["comma", "demo"], fn (name) ->
-    test name do
-      {_, code} = File.read "test/examples/#{:name}.cirru"
-      {_, template} = File.read "text/ast/#{:name}.json"
+  defp readFileFor(name) do
+    {_, template} = File.read "test/ast/#{name}.json"
+    template
+  end
 
-      ast = CirruParser.pare code, ""
-      {_, generated} = JSX.encode ast, [:space, {:indent, 2}]
+  defp generateFor(name) do
+    {_, code} = File.read "test/examples/#{name}.cirru"
 
-      assert generated == template
-    end
+    ast = CirruParser.pare code, ""
+    {_, generated} = JSX.encode ast, [:space, {:indent, 2}]
+    generated
+  end
+
+  test "on single task" do
+    name = "line"
+    template = readFileFor name
+    generated = generateFor name
+    IO.puts generated
+    IO.puts template
+    assert generated == template
   end
 
 end
